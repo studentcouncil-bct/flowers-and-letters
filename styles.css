@@ -150,6 +150,13 @@ label {
     color: var(--muted);
 }
 
+.link-label {
+    margin: 10px 0 4px;
+    font-size: 0.82rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
 input,
 textarea,
 select {
@@ -222,7 +229,31 @@ select:focus {
     margin-top: 10px;
 }
 
-/* Result box */
+/* Small QR Action Buttons */
+.btn-sm {
+    padding: 10px 14px;
+    border: none;
+    border-radius: 12px;
+    background: var(--accent-dark);
+    color: #fff;
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: 0.15s ease;
+}
+
+.btn-sm.secondary {
+    background: #fff;
+    color: var(--accent-dark);
+    border: 1px solid var(--accent);
+}
+
+.btn-sm:active {
+    transform: scale(0.96);
+}
+
+/* Result Box */
 .result-box {
     display: none;
     margin-top: 18px;
@@ -246,22 +277,38 @@ select:focus {
     line-height: 1.4;
 }
 
+/* QR Container & Actions */
+.qr-container {
+    background: #fff;
+    border-radius: 20px;
+    padding: 14px;
+    margin: 8px auto 14px;
+    border: 1px solid var(--soft);
+    box-shadow: 0 6px 16px rgba(2, 132, 199, 0.08);
+}
+
 #qr-image {
     width: min(180px, 55vw);
     height: auto;
-    border-radius: 16px;
-    border: 5px solid #fff;
-    box-shadow: 0 8px 20px rgba(2, 132, 199, 0.15);
+    border-radius: 12px;
     background: #fff;
-    margin: 4px auto 14px;
     display: block;
+    margin: 0 auto 12px;
+}
+
+.qr-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    flex-wrap: wrap;
 }
 
 #share-link {
     width: 100%;
     min-height: 44px;
-    font-size: 13px;
-    color: var(--gray);
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--accent-dark);
     border-radius: 12px;
     border: 1px solid #cbd5e1;
     background: #fff;

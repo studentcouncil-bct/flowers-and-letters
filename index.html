@@ -62,12 +62,23 @@
 
                 <div id="result-box" class="result-box">
                     <h3>Gift ready 🎁</h3>
-                    <p>Send the link, or let her scan the QR code.</p>
-                    <img id="qr-image" alt="QR code to open the gift">
+                    <p>Send the short link or share the QR code directly.</p>
+                    
+                    <!-- QR Display & QR Actions -->
+                    <div class="qr-container">
+                        <img id="qr-image" alt="QR code to open the gift">
+                        <div class="qr-actions">
+                            <button type="button" class="btn-sm" id="btn-download-qr">💾 Save QR Image</button>
+                            <button type="button" class="btn-sm secondary" id="btn-share-qr">📲 Send QR Image</button>
+                        </div>
+                    </div>
+
+                    <!-- Short Link & Link Actions -->
+                    <label for="share-link" class="link-label">Short Link</label>
                     <input id="share-link" type="text" readonly>
                     <div class="share-actions">
-                        <button type="button" class="btn" id="btn-copy">📋 Copy</button>
-                        <button type="button" class="btn secondary" id="btn-share">📤 Share</button>
+                        <button type="button" class="btn" id="btn-copy">📋 Copy Link</button>
+                        <button type="button" class="btn secondary" id="btn-share">📤 Send Link</button>
                     </div>
                 </div>
             </div>

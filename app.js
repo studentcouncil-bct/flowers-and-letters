@@ -30,6 +30,8 @@ function setupActionListeners() {
     const btnCreateFlower = document.getElementById('btn-create-flower');
     const btnCopy = document.getElementById('btn-copy');
     const btnShare = document.getElementById('btn-share');
+    const btnDownloadQR = document.getElementById('btn-download-qr');
+    const btnShareQR = document.getElementById('btn-share-qr');
 
     if (btnCreateLetter) {
         btnCreateLetter.addEventListener('click', function (e) {
@@ -51,6 +53,14 @@ function setupActionListeners() {
 
     if (btnShare) {
         btnShare.addEventListener('click', nativeShare);
+    }
+
+    if (btnDownloadQR) {
+        btnDownloadQR.addEventListener('click', downloadQR);
+    }
+
+    if (btnShareQR) {
+        btnShareQR.addEventListener('click', shareQRImage);
     }
 }
 
@@ -81,39 +91,40 @@ function switchTab(tab) {
     }
 }
 
-function generateLink(type) {
+// Generates compact URL parameters + fetches tiny short link
+async function generateLink(type) {
     const baseUrl = window.location.href.split('?')[0].split('#')[0];
-    const url = new URL(baseUrl);
+    let compactParam = '';
 
     if (type === 'letter') {
         const nameVal = document.getElementById('l-name').value.trim() || 'Beautiful';
         const msgVal = document.getElementById('l-msg').value.trim() || 'I am thinking of you.';
         const fromVal = document.getElementById('l-from').value.trim() || 'Me';
 
-        url.searchParams.set('type', 'letter');
-        url.searchParams.set('name', nameVal);
-        url.searchParams.set('msg', msgVal);
-        url.searchParams.set('from', fromVal);
+        // Compact format: l|Name|Msg|From
+        compactParam = 'l|' + nameVal + '|' + msgVal + '|' + fromVal;
     } else {
         const flowerVal = document.getElementById('f-type').value;
         const noteVal = document.getElementById('f-note').value.trim() || 'For you 💙';
 
-        url.searchParams.set('type', 'flower');
-        url.searchParams.set('flower', flowerVal);
-        url.searchParams.set('note', noteVal);
+        // Compact format: f|Flower|Note
+        compactParam = 'f|' + flowerVal + '|' + noteVal;
     }
 
-    const finalLink = url.toString();
+    const fullGiftUrl = baseUrl + '?g=' + encodeURIComponent(compactParam);
 
     const shareInput = document.getElementById('share-link');
     const qrImg = document.getElementById('qr-image');
     const resultBox = document.getElementById('result-box');
 
-    shareInput.value = finalLink;
+    // Show compact URL initially
+    shareInput.value = fullGiftUrl;
 
-    qrImg.src = 'https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=' +
-        encodeURIComponent(finalLink) +
+    // Set QR code src
+    const qrApiUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' +
+        encodeURIComponent(fullGiftUrl) +
         '&color=0284c7&bgcolor=ffffff';
+    qrImg.src = qrApiUrl;
 
     resultBox.style.display = 'block';
 
@@ -123,6 +134,71 @@ function generateLink(type) {
             block: 'nearest'
         });
     }, 50);
+
+    // Try shortening URL asynchronously via TinyURL / Tiny API
+    try {
+        const shortApiUrl = 'https://tinyurl.com/api-create.php?url=' + encodeURIComponent(fullGiftUrl);
+        const response = await fetch(shortApiUrl);
+        if (response.ok) {
+            const shortUrl = await response.text();
+            if (shortUrl && shortUrl.startsWith('http')) {
+                shareInput.value = shortUrl;
+                // Update QR to use short URL too for cleaner code
+                qrImg.src = 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' +
+                    encodeURIComponent(shortUrl) +
+                    '&color=0284c7&bgcolor=ffffff';
+            }
+        }
+    } catch (e) {
+        // Fallback to compactParam full link if shortener API fails
+    }
+}
+
+// Download QR Image File
+async function downloadQR() {
+    const qrImg = document.getElementById('qr-image');
+    if (!qrImg || !qrImg.src) return;
+
+    try {
+        const response = await fetch(qrImg.src);
+        const blob = await response.blob();
+        const blobUrl = URL.createObjectURL(blob);
+
+        const a = document.createElement('a');
+        a.href = blobUrl;
+        a.download = 'gift-qr-code.png';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(blobUrl);
+    } catch (e) {
+        alert('Long-press the QR code image on your screen to save it!');
+    }
+}
+
+// Send/Share QR Image directly via native share
+async function shareQRImage() {
+    const qrImg = document.getElementById('qr-image');
+    if (!qrImg || !qrImg.src) return;
+
+    try {
+        const response = await fetch(qrImg.src);
+        const blob = await response.blob();
+        const file = new File([blob], 'gift-qr-code.png', { type: 'image/png' });
+
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            await navigator.share({
+                title: 'QR Code Gift 💙',
+                text: 'Scan this QR code to open your gift 🌸',
+                files: [file]
+            });
+        } else {
+            // Fallback to image download
+            downloadQR();
+        }
+    } catch (e) {
+        downloadQR();
+    }
 }
 
 async function copyLink() {
@@ -137,7 +213,7 @@ async function copyLink() {
             input.select();
             document.execCommand('copy');
         }
-        alert('Link copied 💙 Send it to her!');
+        alert('Short link copied 💙 Send it to her!');
     } catch (e) {
         alert('Long-press the link box to copy it.');
     }
@@ -155,7 +231,7 @@ async function nativeShare() {
                 url: url
             });
         } catch (e) {
-            // User cancelled share
+            // User cancelled
         }
     } else {
         copyLink();
@@ -164,19 +240,51 @@ async function nativeShare() {
 
 function checkIncomingGift() {
     const params = new URLSearchParams(window.location.search);
-    const type = params.get('type');
+    const compact = params.get('g');
+    const legacyType = params.get('type');
 
-    if (type) {
+    if (compact || legacyType) {
         document.getElementById('sender-view').style.display = 'none';
         document.getElementById('receiver-view').style.display = 'block';
-        openGift(params);
+        openGift(compact, params);
     }
 }
 
-function openGift(params) {
+function openGift(compact, params) {
     const display = document.getElementById('gift-display');
-    const type = params.get('type');
 
+    if (compact) {
+        const parts = compact.split('|');
+        const type = parts[0];
+
+        if (type === 'l') {
+            const name = parts[1] || 'Beautiful';
+            const msg = parts[2] || 'I am thinking of you.';
+            const from = parts[3] || 'Me';
+
+            display.innerHTML =
+                '<div class="envelope">' +
+                    '<div class="letter-to">Dear ' + escapeHtml(name) + ',</div>' +
+                    '<div class="letter-text">' + escapeHtml(msg) + '</div>' +
+                    '<div class="letter-from">Love,<br>' + escapeHtml(from) + '</div>' +
+                '</div>' +
+                '<p class="tap-hint">Made just for you</p>';
+            return;
+        } else if (type === 'f') {
+            const flower = parts[1] || '🪻';
+            const note = parts[2] || 'For you 💙';
+
+            display.innerHTML =
+                '<p class="flower-subtext">Someone sent you this...</p>' +
+                '<div class="digital-flower">' + escapeHtml(flower) + '</div>' +
+                '<div class="gift-message">“' + escapeHtml(note) + '”</div>' +
+                '<p class="tap-hint">Hold this little moment ✨</p>';
+            return;
+        }
+    }
+
+    // Fallback for legacy longer parameters (?type=letter&name=...)
+    const type = params.get('type');
     if (type === 'letter') {
         const name = params.get('name') || 'Beautiful';
         const msg = params.get('msg') || 'I am thinking of you.';
