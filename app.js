@@ -92,66 +92,66 @@ function switchTab(tab) {
 }
 
 // Generates compact URL parameters + fetches tiny short link
-async function generateLink(type) {
-    const baseUrl = window.location.href.split('?')[0].split('#')[0];
-    let compactParam = '';
+function utf8ToBase64Url(str) {
+    const bytes = new TextEncoder().encode(str);
+    let binary = '';
+    const chunkSize = 0x8000;
+
+    for (let i = 0; i < bytes.length; i += chunkSize) {
+        binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
+    }
+
+    return btoa(binary)
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=+$/g, '');
+}
+
+function base64UrlToUtf8(str) {
+    try {
+        const padded = str.replace(/-/g, '+').replace(/_/g, '/') +
+            '='.repeat((4 - (str.length % 4)) % 4);
+        const binary = atob(padded);
+        const bytes = Uint8Array.from(binary, c => c.charCodeAt(0));
+        return new TextDecoder().decode(bytes);
+    } catch (e) {
+        return null;
+    }
+}
+
+// Creates a compact receiver URL. The gift is stored in the URL fragment (#),
+// so GitHub Pages serves index.html and this script immediately switches to the receiver view.
+function generateLink(type) {
+    let giftData = '';
 
     if (type === 'letter') {
         const nameVal = document.getElementById('l-name').value.trim() || 'Beautiful';
         const msgVal = document.getElementById('l-msg').value.trim() || 'I am thinking of you.';
         const fromVal = document.getElementById('l-from').value.trim() || 'Me';
-
-        // Compact format: l|Name|Msg|From
-        compactParam = 'l|' + nameVal + '|' + msgVal + '|' + fromVal;
+        giftData = 'l|' + nameVal + '|' + msgVal + '|' + fromVal;
     } else {
         const flowerVal = document.getElementById('f-type').value;
         const noteVal = document.getElementById('f-note').value.trim() || 'For you 💙';
-
-        // Compact format: f|Flower|Note
-        compactParam = 'f|' + flowerVal + '|' + noteVal;
+        giftData = 'f|' + flowerVal + '|' + noteVal;
     }
 
-    const fullGiftUrl = baseUrl + '?g=' + encodeURIComponent(compactParam);
+    const encodedGift = utf8ToBase64Url(giftData);
+    const baseUrl = window.location.href.split('?')[0].split('#')[0];
+    const giftUrl = baseUrl + '#g=' + encodedGift;
 
     const shareInput = document.getElementById('share-link');
     const qrImg = document.getElementById('qr-image');
     const resultBox = document.getElementById('result-box');
 
-    // Show compact URL initially
-    shareInput.value = fullGiftUrl;
-
-    // Set QR code src
-    const qrApiUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' +
-        encodeURIComponent(fullGiftUrl) +
-        '&color=0284c7&bgcolor=ffffff';
-    qrImg.src = qrApiUrl;
+    shareInput.value = giftUrl;
+    qrImg.src = 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' +
+        encodeURIComponent(giftUrl) + '&color=0284c7&bgcolor=ffffff';
 
     resultBox.style.display = 'block';
 
     setTimeout(function () {
-        resultBox.scrollIntoView({
-            behavior: 'smooth',
-            block: 'nearest'
-        });
+        resultBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }, 50);
-
-    // Try shortening URL asynchronously via TinyURL / Tiny API
-    try {
-        const shortApiUrl = 'https://tinyurl.com/api-create.php?url=' + encodeURIComponent(fullGiftUrl);
-        const response = await fetch(shortApiUrl);
-        if (response.ok) {
-            const shortUrl = await response.text();
-            if (shortUrl && shortUrl.startsWith('http')) {
-                shareInput.value = shortUrl;
-                // Update QR to use short URL too for cleaner code
-                qrImg.src = 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' +
-                    encodeURIComponent(shortUrl) +
-                    '&color=0284c7&bgcolor=ffffff';
-            }
-        }
-    } catch (e) {
-        // Fallback to compactParam full link if shortener API fails
-    }
 }
 
 // Download QR Image File
@@ -239,6 +239,22 @@ async function nativeShare() {
 }
 
 function checkIncomingGift() {
+    // New compact format: https://site/#g=ENCODED_GIFT
+    const hash = window.location.hash;
+
+    if (hash.startsWith('#g=')) {
+        const encodedGift = hash.slice(3);
+        const compact = base64UrlToUtf8(encodedGift);
+
+        if (compact) {
+            document.getElementById('sender-view').style.display = 'none';
+            document.getElementById('receiver-view').style.display = 'block';
+            openGift(compact, new URLSearchParams());
+            return;
+        }
+    }
+
+    // Compatibility with the previous ?g= format and legacy links.
     const params = new URLSearchParams(window.location.search);
     const compact = params.get('g');
     const legacyType = params.get('type');
