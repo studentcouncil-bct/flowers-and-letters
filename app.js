@@ -29,9 +29,6 @@ function setupActionListeners() {
     const btnCreateLetter = document.getElementById('btn-create-letter');
     const btnCreateFlower = document.getElementById('btn-create-flower');
     const btnCopy = document.getElementById('btn-copy');
-    const btnShare = document.getElementById('btn-share');
-    const btnDownloadQR = document.getElementById('btn-download-qr');
-    const btnShareQR = document.getElementById('btn-share-qr');
 
     if (btnCreateLetter) {
         btnCreateLetter.addEventListener('click', function (e) {
@@ -49,18 +46,6 @@ function setupActionListeners() {
 
     if (btnCopy) {
         btnCopy.addEventListener('click', copyLink);
-    }
-
-    if (btnShare) {
-        btnShare.addEventListener('click', nativeShare);
-    }
-
-    if (btnDownloadQR) {
-        btnDownloadQR.addEventListener('click', downloadQR);
-    }
-
-    if (btnShareQR) {
-        btnShareQR.addEventListener('click', shareQRImage);
     }
 }
 
@@ -154,50 +139,57 @@ function generateLink(type) {
     }, 50);
 }
 
-// Download QR Image File
-async function downloadQR() {
-    const qrImg = document.getElementById('qr-image');
-    if (!qrImg || !qrImg.src) return;
+async function generateLink(type) {
+    const nameVal =
+        document.getElementById('l-name').value.trim() || 'Beautiful';
+
+    const msgVal =
+        document.getElementById('l-msg').value.trim() ||
+        'I am thinking of you.';
+
+    const fromVal =
+        document.getElementById('l-from').value.trim() || 'Me';
+
+    const gift = {
+        type: 'letter',
+        name: nameVal,
+        message: msgVal,
+        sender: fromVal
+    };
+
+    const API_URL = 'https://flowers-and-letters.stamarieeee3468.workers.dev/';
 
     try {
-        const response = await fetch(qrImg.src);
-        const blob = await response.blob();
-        const blobUrl = URL.createObjectURL(blob);
+        const response = await fetch(API_URL + '/api/gifts', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(gift)
+        });
 
-        const a = document.createElement('a');
-        a.href = blobUrl;
-        a.download = 'gift-qr-code.png';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(blobUrl);
-    } catch (e) {
-        alert('Long-press the QR code image on your screen to save it!');
-    }
-}
-
-// Send/Share QR Image directly via native share
-async function shareQRImage() {
-    const qrImg = document.getElementById('qr-image');
-    if (!qrImg || !qrImg.src) return;
-
-    try {
-        const response = await fetch(qrImg.src);
-        const blob = await response.blob();
-        const file = new File([blob], 'gift-qr-code.png', { type: 'image/png' });
-
-        if (navigator.canShare && navigator.canShare({ files: [file] })) {
-            await navigator.share({
-                title: 'QR Code Gift 💙',
-                text: 'Scan this QR code to open your gift 🌸',
-                files: [file]
-            });
-        } else {
-            // Fallback to image download
-            downloadQR();
+        if (!response.ok) {
+            throw new Error('Failed to create gift');
         }
-    } catch (e) {
-        downloadQR();
+
+        const data = await response.json();
+
+        const shareInput = document.getElementById('share-link');
+        const resultBox = document.getElementById('result-box');
+
+        shareInput.value = data.url;
+        resultBox.style.display = 'block';
+
+        setTimeout(function () {
+            resultBox.scrollIntoView({
+                behavior: 'smooth',
+                block: 'nearest'
+            });
+        }, 50);
+
+    } catch (error) {
+        console.error(error);
+        alert('Could not create the gift. Please try again.');
     }
 }
 
@@ -216,25 +208,6 @@ async function copyLink() {
         alert('Short link copied 💙 Send it to her!');
     } catch (e) {
         alert('Long-press the link box to copy it.');
-    }
-}
-
-async function nativeShare() {
-    const url = document.getElementById('share-link').value;
-    if (!url) return;
-
-    if (navigator.share) {
-        try {
-            await navigator.share({
-                title: 'A gift for you 💙',
-                text: 'I made something for you — open this when you can 🌸',
-                url: url
-            });
-        } catch (e) {
-            // User cancelled
-        }
-    } else {
-        copyLink();
     }
 }
 

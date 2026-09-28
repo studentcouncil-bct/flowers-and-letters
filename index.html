@@ -22,11 +22,10 @@
     <div id="app">
         <!-- Sender View (For You) -->
         <div id="sender-view">
-            <h1>Create a Gift 💙</h1>
+            <h1>Write a letter 💙</h1>
             <div class="container">
                 <div class="tabs">
                     <button type="button" class="tab active" id="tab-letter">💌 Letter</button>
-                    <button type="button" class="tab" id="tab-flower">🪻 Flower</button>
                 </div>
 
                 <div id="form-letter" class="form-section active">
@@ -42,18 +41,6 @@
                     <button type="button" class="btn" id="btn-create-letter">✨ Create Magic Link</button>
                 </div>
 
-                <div id="form-flower" class="form-section">
-                    <label for="f-type">Pick a flower</label>
-                    <select id="f-type">
-                        <option value="🪻">🪻 Blue Hyacinth</option>
-                        <option value="🌸">🌸 Cherry Blossom</option>
-                        <option value="🌻">🌻 Sunflower</option>
-                        <option value="🌷">🌷 Tulip</option>
-                        <option value="🌹">🌹 Rose</option>
-                        <option value="🦋">🦋 Blue Butterfly</option>
-                        <option value="💙">💙 Blue Heart</option>
-                    </select>
-
                     <label for="f-note">Tiny note</label>
                     <input id="f-note" type="text" placeholder="Thinking of you..." autocomplete="off" enterkeyhint="done">
 
@@ -62,27 +49,17 @@
 
                 <div id="result-box" class="result-box">
                     <h3>Gift ready 🎁</h3>
-                    <p>Send the short link or share the QR code directly.</p>
-                    
-                    <!-- QR Display & QR Actions -->
-                    <div class="qr-container">
-                        <img id="qr-image" alt="QR code to open the gift">
-                        <div class="qr-actions">
-                            <button type="button" class="btn-sm" id="btn-download-qr">💾 Save QR Image</button>
-                            <button type="button" class="btn-sm secondary" id="btn-share-qr">📲 Send QR Image</button>
-                        </div>
-                    </div>
+                    <p>Send the short link</p>
 
                     <!-- Short Link & Link Actions -->
                     <label for="share-link" class="link-label">Short Link</label>
                     <input id="share-link" type="text" readonly>
                     <div class="share-actions">
                         <button type="button" class="btn" id="btn-copy">📋 Copy Link</button>
-                        <button type="button" class="btn secondary" id="btn-share">📤 Send Link</button>
                     </div>
                 </div>
             </div>
-            <p class="tiny-note">Private gifts · only people with your link can open them</p>
+            <p class="tiny-note">Private gifts only people with your link can open them</p>
         </div>
 
         <!-- Receiver View (For Her) -->
