@@ -1,8 +1,11 @@
 let selectedPhotoUrl = null;
 
-document.addEventListener('DOMContentLoaded', function () {
+// Run immediately as well as on DOM load to guarantee it catches the link on GitHub Pages
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initApp);
+} else {
     initApp();
-});
+}
 
 function initApp() {
     setupTabs();
@@ -12,13 +15,20 @@ function initApp() {
 }
 
 function setupTabs() {
-    document.getElementById('tab-letter').addEventListener('click', function () {
-        switchTab('letter');
-    });
+    const tabLetter = document.getElementById('tab-letter');
+    const tabFlower = document.getElementById('tab-flower');
 
-    document.getElementById('tab-flower').addEventListener('click', function () {
-        switchTab('flower');
-    });
+    if (tabLetter) {
+        tabLetter.addEventListener('click', function () {
+            switchTab('letter');
+        });
+    }
+
+    if (tabFlower) {
+        tabFlower.addEventListener('click', function () {
+            switchTab('flower');
+        });
+    }
 }
 
 function switchTab(tab) {
@@ -27,6 +37,8 @@ function switchTab(tab) {
     const tabLetter = document.getElementById('tab-letter');
     const tabFlower = document.getElementById('tab-flower');
     const resultBox = document.getElementById('result-box');
+
+    if (!letterForm || !flowerForm) return;
 
     letterForm.classList.remove('active');
     flowerForm.classList.remove('active');
@@ -41,7 +53,9 @@ function switchTab(tab) {
         tabFlower.classList.add('active');
     }
 
-    resultBox.style.display = 'none';
+    if (resultBox) {
+        resultBox.style.display = 'none';
+    }
 }
 
 function setupCameraHandling() {
@@ -51,6 +65,8 @@ function setupCameraHandling() {
     const previewImg = document.getElementById('f-preview-img');
     const removeBtn = document.getElementById('btn-remove-photo');
 
+    if (!triggerBtn || !photoInput) return;
+
     triggerBtn.addEventListener('click', function () {
         photoInput.click();
     });
@@ -59,7 +75,6 @@ function setupCameraHandling() {
         const file = e.target.files[0];
         if (!file) return;
 
-        // Compress and prepare photo
         const reader = new FileReader();
         reader.onload = function (event) {
             compressImage(event.target.result, 600, 0.7, function (compressedDataUrl) {
@@ -72,15 +87,16 @@ function setupCameraHandling() {
         reader.readAsDataURL(file);
     });
 
-    removeBtn.addEventListener('click', function () {
-        selectedPhotoUrl = null;
-        photoInput.value = '';
-        previewCard.classList.add('hidden');
-        triggerBtn.innerText = '📸 Take Flower Photo';
-    });
+    if (removeBtn) {
+        removeBtn.addEventListener('click', function () {
+            selectedPhotoUrl = null;
+            photoInput.value = '';
+            previewCard.classList.add('hidden');
+            triggerBtn.innerText = '📸 Take Flower Photo';
+        });
+    }
 }
 
-// Resizes photo so it uploads instantly
 function compressImage(base64Str, maxWidth, quality, callback) {
     const img = new Image();
     img.src = base64Str;
@@ -117,7 +133,8 @@ function setupButtons() {
 }
 
 async function createGiftLink(type) {
-    const baseUrl = window.location.href.split('?')[0].split('#')[0];
+    // Get clean base URL on GitHub Pages
+    const baseUrl = window.location.origin + window.location.pathname;
     const url = new URL(baseUrl);
     const createBtn = (type === 'letter') ? document.getElementById('btn-create-letter') : document.getElementById('btn-create-flower');
 
@@ -129,7 +146,7 @@ async function createGiftLink(type) {
         const msg = document.getElementById('l-msg').value.trim() || 'Thinking of you!';
         const from = document.getElementById('l-from').value.trim() || 'Me';
 
-        url.searchParams.set('type', 'letter');
+        url.searchParams.set('t', 'l');
         url.searchParams.set('to', name);
         url.searchParams.set('msg', msg);
         url.searchParams.set('from', from);
@@ -145,23 +162,21 @@ async function createGiftLink(type) {
             return;
         }
 
-        // Upload photo to free anonymous host (tmpfiles.org)
         try {
             const uploadedImgUrl = await uploadPhotoToWeb(selectedPhotoUrl);
-            url.searchParams.set('type', 'flower');
+            url.searchParams.set('t', 'f');
             url.searchParams.set('img', uploadedImgUrl);
             url.searchParams.set('note', note);
 
             finishLinkGeneration(url.toString(), createBtn);
         } catch (err) {
-            alert('Could not upload photo. Please check internet connection.');
+            alert('Could not upload photo. Please check your internet connection.');
             createBtn.innerText = '✨ Generate Gift Link';
             createBtn.disabled = false;
         }
     }
 }
 
-// Anonymous instant free photo host
 async function uploadPhotoToWeb(base64Data) {
     const blob = await (await fetch(base64Data)).blob();
     const formData = new FormData();
@@ -174,35 +189,20 @@ async function uploadPhotoToWeb(base64Data) {
 
     const data = await response.json();
     if (data.status === 'success') {
-        // Change preview URL to direct download URL
         return data.data.url.replace('tmpfiles.org/', 'tmpfiles.org/dl/');
     } else {
         throw new Error('Upload failed');
     }
 }
 
-async function finishLinkGeneration(fullUrl, createBtn) {
+function finishLinkGeneration(fullUrl, createBtn) {
     const shareInput = document.getElementById('share-link');
     const resultBox = document.getElementById('result-box');
     const statusText = document.getElementById('result-status-text');
 
     shareInput.value = fullUrl;
+    if (statusText) statusText.innerText = 'Your gift link is ready below! 💙';
     resultBox.style.display = 'block';
-
-    // Shorten URL automatically via TinyURL
-    try {
-        statusText.innerText = 'Shortening your link... 🪄';
-        const shortRes = await fetch('https://tinyurl.com/api-create.php?url=' + encodeURIComponent(fullUrl));
-        if (shortRes.ok) {
-            const shortUrl = await shortRes.text();
-            if (shortUrl && shortUrl.startsWith('http')) {
-                shareInput.value = shortUrl;
-                statusText.innerText = 'Your short link is ready! 💙';
-            }
-        }
-    } catch (e) {
-        statusText.innerText = 'Your gift link is ready below.';
-    }
 
     createBtn.innerText = '✨ Generate Gift Link';
     createBtn.disabled = false;
@@ -213,7 +213,7 @@ function copyLink() {
     const linkInput = document.getElementById('share-link');
     linkInput.select();
     document.execCommand('copy');
-    alert('Short Link Copied! 💙');
+    alert('Link Copied! 💙 Send it to her!');
 }
 
 async function nativeShare() {
@@ -233,30 +233,57 @@ async function nativeShare() {
     }
 }
 
+// Checks URL on page load for letter parameters
 function checkUrlForGift() {
-    const params = new URLSearchParams(window.location.search);
-    const type = params.get('type');
+    let searchStr = window.location.search;
+    if (!searchStr && window.location.hash) {
+        searchStr = '?' + window.location.hash.substring(1);
+    }
+
+    const params = new URLSearchParams(searchStr);
+    const type = params.get('t') || params.get('type');
 
     if (type) {
-        document.getElementById('sender-view').style.display = 'none';
-        document.getElementById('receiver-view').style.display = 'block';
+        const senderView = document.getElementById('sender-view');
+        const receiverView = document.getElementById('receiver-view');
 
-        const display = document.getElementById('gift-display');
+        if (senderView) senderView.style.display = 'none';
+        if (receiverView) receiverView.style.display = 'block';
 
-        if (type === 'letter') {
-            display.innerHTML =
-                '<div class="envelope">' +
-                    '<div class="letter-to">Dear ' + escapeHtml(params.get('to') || 'You') + ',</div>' +
-                    '<div class="letter-text">' + escapeHtml(params.get('msg') || '') + '</div>' +
-                    '<div class="letter-from">Love,<br>' + escapeHtml(params.get('from') || '') + '</div>' +
-                '</div>';
-        } else if (type === 'flower') {
-            display.innerHTML =
+        renderGift(type, params);
+    }
+}
+
+function renderGift(type, params) {
+    const display = document.getElementById('gift-display');
+    if (!display) return;
+
+    if (type === 'l' || type === 'letter') {
+        const to = params.get('to') || params.get('name') || 'You';
+        const msg = params.get('msg') || '';
+        const from = params.get('from') || 'Someone special';
+
+        display.innerHTML =
+            '<div class="envelope">' +
+                '<div class="letter-to">Dear ' + escapeHtml(to) + ',</div>' +
+                '<div class="letter-text">' + escapeHtml(msg) + '</div>' +
+                '<div class="letter-from">Love,<br>' + escapeHtml(from) + '</div>' +
+            '</div>';
+    } else if (type === 'f' || type === 'flower') {
+        const img = params.get('img');
+        const note = params.get('note') || 'For you 💙';
+
+        let imgHtml = '';
+        if (img) {
+            imgHtml =
                 '<div class="received-photo-card">' +
-                    '<img src="' + escapeHtml(params.get('img')) + '" alt="Flower photo">' +
-                '</div>' +
-                '<div class="gift-message">“' + escapeHtml(params.get('note') || 'For you 💙') + '”</div>';
+                    '<img src="' + escapeHtml(img) + '" alt="Flower photo">' +
+                '</div>';
         }
+
+        display.innerHTML =
+            imgHtml +
+            '<div class="gift-message">“' + escapeHtml(note) + '”</div>';
     }
 }
 
