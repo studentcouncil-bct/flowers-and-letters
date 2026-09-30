@@ -195,17 +195,26 @@ async function uploadPhotoToWeb(base64Data) {
     }
 }
 
+// Replace this function in app.js
 function finishLinkGeneration(fullUrl, createBtn) {
     const shareInput = document.getElementById('share-link');
     const resultBox = document.getElementById('result-box');
     const statusText = document.getElementById('result-status-text');
 
+    // 1. Put the full working link in the box immediately
     shareInput.value = fullUrl;
-    if (statusText) statusText.innerText = 'Your gift link is ready below! 💙';
+    
+    // 2. Update the status text
+    if (statusText) statusText.innerText = 'Gift link generated! 💙';
+    
+    // 3. Show the box
     resultBox.style.display = 'block';
 
+    // 4. Reset the button
     createBtn.innerText = '✨ Generate Gift Link';
     createBtn.disabled = false;
+    
+    // 5. Scroll down to show the link
     resultBox.scrollIntoView({ behavior: 'smooth' });
 }
 
