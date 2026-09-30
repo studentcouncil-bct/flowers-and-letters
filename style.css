@@ -1,0 +1,589 @@
+/* ===== RESET & BASE ===== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Quicksand', sans-serif;
+    background: #0a0e27;
+    color: #e0e6ff;
+    min-height: 100vh;
+    overflow: hidden;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* ===== STARS CANVAS ===== */
+#starsCanvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+}
+
+/* ===== SHOOTING STARS ===== */
+.shooting-star {
+    position: fixed;
+    width: 4px;
+    height: 4px;
+    background: #fff;
+    border-radius: 50%;
+    z-index: 1;
+    pointer-events: none;
+    opacity: 0;
+}
+
+.shooting-star::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    right: 100%;
+    width: 80px;
+    height: 2px;
+    background: linear-gradient(to left, rgba(150, 180, 255, 0.8), transparent);
+    transform: translateY(-50%);
+}
+
+@keyframes shootingStar {
+    0% {
+        opacity: 0;
+        transform: translate(0, 0) rotate(-35deg);
+    }
+    5% {
+        opacity: 1;
+    }
+    70% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
+        transform: translate(-400px, 300px) rotate(-35deg);
+    }
+}
+
+/* ===== FLOATING PARTICLES ===== */
+.particle {
+    position: fixed;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* ===== MOON ===== */
+.moon {
+    position: fixed;
+    top: 8%;
+    right: 10%;
+    width: 80px;
+    height: 80px;
+    background: radial-gradient(circle at 35% 35%, #f0e6d3, #d4c5a9);
+    border-radius: 50%;
+    box-shadow:
+        0 0 40px rgba(240, 230, 211, 0.3),
+        0 0 80px rgba(240, 230, 211, 0.15);
+    z-index: 1;
+    opacity: 0;
+    transition: opacity 2s ease;
+}
+
+.moon.visible {
+    opacity: 1;
+}
+
+.moon-crater {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(180, 165, 140, 0.3);
+}
+
+.moon-crater:nth-child(1) {
+    width: 15px;
+    height: 15px;
+    top: 20px;
+    left: 15px;
+}
+
+.moon-crater:nth-child(2) {
+    width: 10px;
+    height: 10px;
+    top: 40px;
+    left: 45px;
+}
+
+.moon-crater:nth-child(3) {
+    width: 8px;
+    height: 8px;
+    top: 15px;
+    left: 50px;
+}
+
+.moon-crater:nth-child(4) {
+    width: 12px;
+    height: 12px;
+    top: 50px;
+    left: 25px;
+}
+
+/* ===== CLOUDS ===== */
+.cloud {
+    position: fixed;
+    z-index: 1;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 2s ease;
+}
+
+.cloud.visible {
+    opacity: 0.08;
+}
+
+.cloud-body {
+    background: #4a6fa5;
+    border-radius: 50px;
+    position: relative;
+}
+
+.cloud-1 {
+    top: 20%;
+    left: -150px;
+    animation: cloudFloat1 45s linear infinite;
+}
+
+.cloud-2 {
+    top: 55%;
+    left: -200px;
+    animation: cloudFloat2 60s linear infinite;
+}
+
+.cloud-1 .cloud-body {
+    width: 120px;
+    height: 40px;
+}
+
+.cloud-2 .cloud-body {
+    width: 160px;
+    height: 50px;
+}
+
+@keyframes cloudFloat1 {
+    from { transform: translateX(0); }
+    to { transform: translateX(calc(100vw + 300px)); }
+}
+
+@keyframes cloudFloat2 {
+    from { transform: translateX(0); }
+    to { transform: translateX(calc(100vw + 400px)); }
+}
+
+/* ===== MAIN CONTENT SCREENS ===== */
+.screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    padding: 30px;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.8s ease, visibility 0.8s ease;
+}
+
+.screen.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* ===== TEXT STYLES ===== */
+.screen-text {
+    font-size: clamp(1.6rem, 5vw, 2.8rem);
+    text-align: center;
+    line-height: 1.6;
+    max-width: 600px;
+    font-weight: 300;
+    letter-spacing: 0.5px;
+}
+
+.screen-text.dancing {
+    font-family: 'Dancing Script', cursive;
+    font-size: clamp(2rem, 7vw, 3.5rem);
+    font-weight: 700;
+}
+
+.screen-text.small {
+    font-size: clamp(1rem, 3vw, 1.4rem);
+    opacity: 0.6;
+    margin-top: 15px;
+}
+
+.screen-text em {
+    color: #7eb5ff;
+    font-style: normal;
+    font-weight: 500;
+}
+
+.highlight {
+    color: #7eb5ff;
+    font-weight: 600;
+}
+
+.heart-color {
+    color: #ff6b8a;
+}
+
+.final-sub {
+    margin-top: 25px;
+}
+
+/* ===== TAP INDICATOR ===== */
+.tap-indicator {
+    position: absolute;
+    bottom: 12%;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    opacity: 0;
+    animation: fadeInUp 1s ease 1.5s forwards;
+}
+
+.tap-text {
+    font-size: 0.85rem;
+    opacity: 0.4;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+
+.tap-arrow {
+    width: 20px;
+    height: 20px;
+    border-right: 2px solid rgba(255, 255, 255, 0.3);
+    border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+    transform: rotate(45deg);
+    animation: bounceArrow 2s ease infinite;
+}
+
+@keyframes bounceArrow {
+    0%, 100% { transform: rotate(45deg) translateY(0); }
+    50% { transform: rotate(45deg) translateY(5px); }
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+}
+
+/* ===== FLOATING EMOJIS ===== */
+.float-emoji {
+    position: fixed;
+    font-size: 1.5rem;
+    pointer-events: none;
+    z-index: 5;
+    animation: floatUp 4s ease forwards;
+}
+
+@keyframes floatUp {
+    0% {
+        opacity: 1;
+        transform: translateY(0) scale(1) rotate(0deg);
+    }
+    100% {
+        opacity: 0;
+        transform: translateY(-300px) scale(0.5) rotate(20deg);
+    }
+}
+
+/* ===== PROGRESS DOTS ===== */
+.progress-dots {
+    position: fixed;
+    bottom: 5%;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 8px;
+    z-index: 20;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+}
+
+.progress-dots.visible {
+    opacity: 1;
+}
+
+.dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(126, 181, 255, 0.2);
+    transition: all 0.4s ease;
+}
+
+.dot.active {
+    background: rgba(126, 181, 255, 0.8);
+    box-shadow: 0 0 10px rgba(126, 181, 255, 0.4);
+    transform: scale(1.3);
+}
+
+.dot.passed {
+    background: rgba(126, 181, 255, 0.5);
+}
+
+/* ===== HEART RAIN ===== */
+.heart-rain {
+    position: fixed;
+    top: -20px;
+    font-size: 1.2rem;
+    z-index: 5;
+    pointer-events: none;
+    animation: heartFall linear forwards;
+}
+
+@keyframes heartFall {
+    0% {
+        transform: translateY(0) rotate(0deg);
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(110vh) rotate(360deg);
+        opacity: 0;
+    }
+}
+
+/* ===== FINAL SCREEN GLOW ===== */
+.final-glow {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    width: 300px;
+    height: 300px;
+    background: radial-gradient(circle, rgba(126, 181, 255, 0.15), transparent 70%);
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    z-index: 4;
+    opacity: 0;
+    transition: opacity 2s ease;
+    pointer-events: none;
+}
+
+.final-glow.visible {
+    opacity: 1;
+}
+
+.big-heart {
+    font-size: 4rem;
+    display: inline-block;
+    animation: heartbeat 1.5s ease infinite;
+    margin-bottom: 20px;
+}
+
+@keyframes heartbeat {
+    0%, 100% { transform: scale(1); }
+    15% { transform: scale(1.15); }
+    30% { transform: scale(1); }
+    45% { transform: scale(1.1); }
+}
+
+/* ===== NAME INPUT SCREEN ===== */
+.name-input-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+}
+
+.name-input {
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid rgba(126, 181, 255, 0.4);
+    color: #7eb5ff;
+    font-family: 'Dancing Script', cursive;
+    font-size: clamp(1.8rem, 5vw, 2.5rem);
+    text-align: center;
+    padding: 10px 20px;
+    outline: none;
+    width: 80%;
+    max-width: 300px;
+    transition: border-color 0.3s ease;
+}
+
+.name-input:focus {
+    border-color: rgba(126, 181, 255, 0.8);
+}
+
+.name-input::placeholder {
+    color: rgba(126, 181, 255, 0.3);
+}
+
+.start-btn {
+    background: linear-gradient(135deg, #1a3a6e, #2d5aa0);
+    color: #e0e6ff;
+    border: 1px solid rgba(126, 181, 255, 0.3);
+    padding: 14px 40px;
+    border-radius: 50px;
+    font-family: 'Quicksand', sans-serif;
+    font-size: 1rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 10px;
+}
+
+.start-btn:hover,
+.start-btn:active {
+    background: linear-gradient(135deg, #2d5aa0, #3d6fc0);
+    box-shadow: 0 0 30px rgba(126, 181, 255, 0.3);
+    transform: scale(1.05);
+}
+
+/* ===== MUSIC TOGGLE BUTTON ===== */
+.music-btn {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 100;
+    background: rgba(126, 181, 255, 0.1);
+    border: 1px solid rgba(126, 181, 255, 0.2);
+    color: #7eb5ff;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 1.2rem;
+    transition: all 0.3s ease;
+    opacity: 0;
+    visibility: hidden;
+}
+
+.music-btn.visible {
+    opacity: 1;
+    visibility: visible;
+}
+
+.music-btn:active {
+    transform: scale(0.9);
+}
+
+.music-btn.playing {
+    background: rgba(126, 181, 255, 0.2);
+}
+
+/* ===== RIPPLE ON TAP ===== */
+.ripple {
+    position: fixed;
+    border-radius: 50%;
+    border: 1px solid rgba(126, 181, 255, 0.4);
+    pointer-events: none;
+    z-index: 15;
+    animation: rippleExpand 0.8s ease forwards;
+}
+
+@keyframes rippleExpand {
+    from {
+        width: 0;
+        height: 0;
+        opacity: 1;
+    }
+    to {
+        width: 150px;
+        height: 150px;
+        opacity: 0;
+    }
+}
+
+/* ===== SPARKLE EFFECT ===== */
+.sparkle {
+    position: fixed;
+    pointer-events: none;
+    z-index: 6;
+}
+
+.sparkle-inner {
+    width: 6px;
+    height: 6px;
+    background: #7eb5ff;
+    clip-path: polygon(
+        50% 0%, 61% 35%, 98% 35%, 68% 57%,
+        79% 91%, 50% 70%, 21% 91%, 32% 57%,
+        2% 35%, 39% 35%
+    );
+    animation: sparklePop 0.8s ease forwards;
+}
+
+@keyframes sparklePop {
+    0% {
+        transform: scale(0) rotate(0deg);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(1.5) rotate(180deg);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(0) rotate(360deg);
+        opacity: 0;
+    }
+}
+
+/* ===== ZZZ ANIMATION ===== */
+.zzz {
+    position: fixed;
+    font-size: 2rem;
+    color: rgba(126, 181, 255, 0.6);
+    pointer-events: none;
+    z-index: 5;
+    font-weight: 700;
+    animation: zzzFloat 3s ease forwards;
+}
+
+@keyframes zzzFloat {
+    0% {
+        opacity: 0;
+        transform: translate(0, 0) scale(0.5);
+    }
+    20% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
+        transform: translate(30px, -100px) scale(1.5);
+    }
+}
+
+/* ===== TRANSITION OVERLAY ===== */
+.transition-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #0a0e27;
+    z-index: 50;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.5s ease;
+}
+
+.transition-overlay.active {
+    opacity: 1;
+    pointer-events: all;
+}
