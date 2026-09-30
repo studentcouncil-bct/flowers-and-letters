@@ -233,7 +233,7 @@ async function nativeShare() {
     }
 }
 
-// Checks URL on page load for letter parameters
+// Add/replace this function in app.js
 function checkUrlForGift() {
     let searchStr = window.location.search;
     if (!searchStr && window.location.hash) {
@@ -241,6 +241,7 @@ function checkUrlForGift() {
     }
 
     const params = new URLSearchParams(searchStr);
+    // Checks for both short ('t') and long ('type') parameter names
     const type = params.get('t') || params.get('type');
 
     if (type) {
@@ -254,10 +255,12 @@ function checkUrlForGift() {
     }
 }
 
+// Add/replace this function in app.js
 function renderGift(type, params) {
     const display = document.getElementById('gift-display');
     if (!display) return;
 
+    // Checks for 'l' or 'letter'
     if (type === 'l' || type === 'letter') {
         const to = params.get('to') || params.get('name') || 'You';
         const msg = params.get('msg') || '';
@@ -269,7 +272,9 @@ function renderGift(type, params) {
                 '<div class="letter-text">' + escapeHtml(msg) + '</div>' +
                 '<div class="letter-from">Love,<br>' + escapeHtml(from) + '</div>' +
             '</div>';
-    } else if (type === 'f' || type === 'flower') {
+    } 
+    // Checks for 'f' or 'flower'
+    else if (type === 'f' || type === 'flower') {
         const img = params.get('img');
         const note = params.get('note') || 'For you 💙';
 
@@ -286,6 +291,13 @@ function renderGift(type, params) {
             '<div class="gift-message">“' + escapeHtml(note) + '”</div>';
     }
 }
+
+// Call immediately so URL parameters are parsed without waiting for DOM delays
+checkUrlForGift();
+
+document.addEventListener('DOMContentLoaded', function () {
+    initApp();
+});
 
 function escapeHtml(str) {
     return String(str)
