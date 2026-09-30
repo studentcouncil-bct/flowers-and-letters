@@ -10,7 +10,7 @@
 </head>
 <body>
 
-    <!-- Background clouds -->
+    <!-- Floating Background Clouds -->
     <div class="clouds" aria-hidden="true">
         <div class="cloud cloud-1">☁️</div>
         <div class="cloud cloud-2">☁️</div>
@@ -42,13 +42,11 @@
                     <button type="button" class="btn" id="btn-create-letter">✨ Generate Gift Link</button>
                 </div>
 
-                <!-- Flower Form (Camera / Photo) -->
+                <!-- Flower Form (Camera Capture) -->
                 <div id="form-flower" class="form-section">
                     <label>Take a Flower Photo 📸</label>
                     <div class="photo-upload-box">
-                        <!-- Opens camera directly on phones -->
                         <input id="f-photo-input" type="file" accept="image/*" capture="environment" class="hidden-input">
-                        
                         <button type="button" class="btn secondary" id="btn-trigger-camera">📸 Take Flower Photo</button>
 
                         <div id="photo-preview-card" class="photo-preview-card hidden">
@@ -63,13 +61,14 @@
                     <button type="button" class="btn" id="btn-create-flower">✨ Generate Gift Link</button>
                 </div>
 
+                <!-- Result Box -->
                 <div id="result-box" class="result-box">
                     <h3>Gift Ready! 🎁</h3>
-                    <p id="result-status-text">Your link is ready.</p>
-                    
-                    <label for="share-link">Link</label>
+                    <p>Copy your link below to send or shorten on TinyURL.</p>
+
+                    <label for="share-link">Gift Link</label>
                     <input id="share-link" type="text" readonly>
-                    
+
                     <div class="share-actions">
                         <button type="button" class="btn" id="btn-copy">📋 Copy Link</button>
                     </div>
@@ -84,6 +83,6 @@
         </div>
     </div>
 
-    <script src="app.js?v=2"></script>
+    <script src="app.js"></script>
 </body>
 </html>

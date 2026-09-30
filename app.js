@@ -1,11 +1,9 @@
 let selectedPhotoUrl = null;
 
-// Run immediately as well as on DOM load to guarantee it catches the link on GitHub Pages
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initApp);
-} else {
+// Initialize when DOM is ready
+document.addEventListener('DOMContentLoaded', function () {
     initApp();
-}
+});
 
 function initApp() {
     setupTabs();
@@ -72,12 +70,12 @@ function setupCameraHandling() {
     });
 
     photoInput.addEventListener('change', function (e) {
-        const file = e.target.files[0];
+        const file = e.target.files && e.target.files[0];
         if (!file) return;
 
         const reader = new FileReader();
         reader.onload = function (event) {
-            compressImage(event.target.result, 600, 0.7, function (compressedDataUrl) {
+            compressImage(event.target.result, 700, 0.72, function (compressedDataUrl) {
                 selectedPhotoUrl = compressedDataUrl;
                 previewImg.src = compressedDataUrl;
                 previewCard.classList.remove('hidden');
@@ -99,7 +97,6 @@ function setupCameraHandling() {
 
 function compressImage(base64Str, maxWidth, quality, callback) {
     const img = new Image();
-    img.src = base64Str;
     img.onload = function () {
         const canvas = document.createElement('canvas');
         let width = img.width;
@@ -117,23 +114,36 @@ function compressImage(base64Str, maxWidth, quality, callback) {
         ctx.drawImage(img, 0, 0, width, height);
         callback(canvas.toDataURL('image/jpeg', quality));
     };
+    img.src = base64Str;
 }
 
 function setupButtons() {
-    document.getElementById('btn-create-letter').addEventListener('click', function () {
-        createGiftLink('letter');
-    });
+    const btnLetter = document.getElementById('btn-create-letter');
+    const btnFlower = document.getElementById('btn-create-flower');
+    const btnCopy = document.getElementById('btn-copy');
+    const btnShare = document.getElementById('btn-share-native');
 
-    document.getElementById('btn-create-flower').addEventListener('click', function () {
-        createGiftLink('flower');
-    });
+    if (btnLetter) {
+        btnLetter.addEventListener('click', function () {
+            createGiftLink('letter');
+        });
+    }
 
-    document.getElementById('btn-copy').addEventListener('click', copyLink);
-    document.getElementById('btn-share-native').addEventListener('click', nativeShare);
+    if (btnFlower) {
+        btnFlower.addEventListener('click', function () {
+            createGiftLink('flower');
+        });
+    }
+
+    if (btnCopy) btnCopy.addEventListener('click', copyLink);
+    if (btnShare) btnShare.addEventListener('click', nativeShare);
 }
 
+/* =========================================================
+   GENERATE DIRECT URL PARAMETER LINK
+   ========================================================= */
+
 async function createGiftLink(type) {
-    // Get clean base URL on GitHub Pages
     const baseUrl = window.location.origin + window.location.pathname;
     const url = new URL(baseUrl);
     const createBtn = (type === 'letter') ? document.getElementById('btn-create-letter') : document.getElementById('btn-create-flower');
@@ -146,7 +156,7 @@ async function createGiftLink(type) {
         const msg = document.getElementById('l-msg').value.trim() || 'Thinking of you!';
         const from = document.getElementById('l-from').value.trim() || 'Me';
 
-        url.searchParams.set('t', 'l');
+        url.searchParams.set('type', 'letter');
         url.searchParams.set('to', name);
         url.searchParams.set('msg', msg);
         url.searchParams.set('from', from);
@@ -164,7 +174,7 @@ async function createGiftLink(type) {
 
         try {
             const uploadedImgUrl = await uploadPhotoToWeb(selectedPhotoUrl);
-            url.searchParams.set('t', 'f');
+            url.searchParams.set('type', 'flower');
             url.searchParams.set('img', uploadedImgUrl);
             url.searchParams.set('note', note);
 
@@ -188,41 +198,31 @@ async function uploadPhotoToWeb(base64Data) {
     });
 
     const data = await response.json();
-    if (data.status === 'success') {
+    if (data && data.status === 'success' && data.data && data.data.url) {
         return data.data.url.replace('tmpfiles.org/', 'tmpfiles.org/dl/');
-    } else {
-        throw new Error('Upload failed');
     }
+    throw new Error('Upload failed');
 }
 
-// Replace this function in app.js
 function finishLinkGeneration(fullUrl, createBtn) {
     const shareInput = document.getElementById('share-link');
     const resultBox = document.getElementById('result-box');
-    const statusText = document.getElementById('result-status-text');
 
-    // 1. Put the full working link in the box immediately
     shareInput.value = fullUrl;
-    
-    // 2. Update the status text
-    if (statusText) statusText.innerText = 'Gift link generated! 💙';
-    
-    // 3. Show the box
     resultBox.style.display = 'block';
 
-    // 4. Reset the button
     createBtn.innerText = '✨ Generate Gift Link';
     createBtn.disabled = false;
-    
-    // 5. Scroll down to show the link
     resultBox.scrollIntoView({ behavior: 'smooth' });
 }
 
 function copyLink() {
     const linkInput = document.getElementById('share-link');
+    if (!linkInput || !linkInput.value) return;
+
     linkInput.select();
     document.execCommand('copy');
-    alert('Link Copied! 💙 Send it to her!');
+    alert('Link Copied! 💙 Copy this into TinyURL if you want it short!');
 }
 
 async function nativeShare() {
@@ -242,7 +242,10 @@ async function nativeShare() {
     }
 }
 
-// Add/replace this function in app.js
+/* =========================================================
+   CHECK & DISPLAY GIFT ON RECEIVER END
+   ========================================================= */
+
 function checkUrlForGift() {
     let searchStr = window.location.search;
     if (!searchStr && window.location.hash) {
@@ -250,8 +253,7 @@ function checkUrlForGift() {
     }
 
     const params = new URLSearchParams(searchStr);
-    // Checks for both short ('t') and long ('type') parameter names
-    const type = params.get('t') || params.get('type');
+    const type = params.get('type') || params.get('t');
 
     if (type) {
         const senderView = document.getElementById('sender-view');
@@ -264,13 +266,11 @@ function checkUrlForGift() {
     }
 }
 
-// Add/replace this function in app.js
 function renderGift(type, params) {
     const display = document.getElementById('gift-display');
     if (!display) return;
 
-    // Checks for 'l' or 'letter'
-    if (type === 'l' || type === 'letter') {
+    if (type === 'letter' || type === 'l') {
         const to = params.get('to') || params.get('name') || 'You';
         const msg = params.get('msg') || '';
         const from = params.get('from') || 'Someone special';
@@ -281,9 +281,7 @@ function renderGift(type, params) {
                 '<div class="letter-text">' + escapeHtml(msg) + '</div>' +
                 '<div class="letter-from">Love,<br>' + escapeHtml(from) + '</div>' +
             '</div>';
-    } 
-    // Checks for 'f' or 'flower'
-    else if (type === 'f' || type === 'flower') {
+    } else if (type === 'flower' || type === 'f') {
         const img = params.get('img');
         const note = params.get('note') || 'For you 💙';
 
@@ -300,13 +298,6 @@ function renderGift(type, params) {
             '<div class="gift-message">“' + escapeHtml(note) + '”</div>';
     }
 }
-
-// Call immediately so URL parameters are parsed without waiting for DOM delays
-checkUrlForGift();
-
-document.addEventListener('DOMContentLoaded', function () {
-    initApp();
-});
 
 function escapeHtml(str) {
     return String(str)
